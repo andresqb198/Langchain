@@ -33,13 +33,14 @@ from langchain.tools.pubmed.tool import PubmedQueryRun
 from langchain.tools.base import BaseTool
 from langchain.tools.bing_search.tool import BingSearchRun
 from langchain.tools.ddg_search.tool import DuckDuckGoSearchRun
+from langchain.tools.google_cloud.texttospeech import GoogleCloudTextToSpeechTool
 from langchain.tools.google_search.tool import GoogleSearchResults, GoogleSearchRun
+from langchain.tools.google_scholar.tool import GoogleScholarQueryRun
 from langchain.tools.metaphor_search.tool import MetaphorSearchResults
 from langchain.tools.google_serper.tool import GoogleSerperResults, GoogleSerperRun
 from langchain.tools.searchapi.tool import SearchAPIResults, SearchAPIRun
 from langchain.tools.graphql.tool import BaseGraphQLTool
 from langchain.tools.human.tool import HumanInputRun
-from langchain.tools.python.tool import PythonREPLTool
 from langchain.tools.requests.tool import (
     RequestsDeleteTool,
     RequestsGetTool,
@@ -57,6 +58,7 @@ from langchain.tools.wolfram_alpha.tool import WolframAlphaQueryRun
 from langchain.tools.openweathermap.tool import OpenWeatherMapQueryRun
 from langchain.tools.dataforseo_api_search import DataForSeoAPISearchRun
 from langchain.tools.dataforseo_api_search import DataForSeoAPISearchResults
+from langchain.tools.memorize.tool import Memorize
 from langchain.utilities.arxiv import ArxivAPIWrapper
 from langchain.utilities.golden_query import GoldenQueryAPIWrapper
 from langchain.utilities.pubmed import PubMedAPIWrapper
@@ -64,6 +66,7 @@ from langchain.utilities.bing_search import BingSearchAPIWrapper
 from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
 from langchain.utilities.google_search import GoogleSearchAPIWrapper
 from langchain.utilities.google_serper import GoogleSerperAPIWrapper
+from langchain.utilities.google_scholar import GoogleScholarAPIWrapper
 from langchain.utilities.metaphor_search import MetaphorSearchAPIWrapper
 from langchain.utilities.awslambda import LambdaWrapper
 from langchain.utilities.graphql import GraphQLAPIWrapper
@@ -78,7 +81,14 @@ from langchain.utilities.dataforseo_api_search import DataForSeoAPIWrapper
 
 
 def _get_python_repl() -> BaseTool:
-    return PythonREPLTool()
+    raise ImportError(
+        "This tool has been moved to langchain experiment. "
+        "This tool has access to a python REPL. "
+        "For best practices make sure to sandbox this tool. "
+        "Read https://github.com/langchain-ai/langchain/blob/master/SECURITY.md "
+        "To keep using this code as is, install langchain experimental and "
+        "update relevant imports replacing 'langchain' with 'langchain_experimental'"
+    )
 
 
 def _get_tools_requests_get() -> BaseTool:
@@ -222,6 +232,10 @@ def _get_google_serper(**kwargs: Any) -> BaseTool:
     return GoogleSerperRun(api_wrapper=GoogleSerperAPIWrapper(**kwargs))
 
 
+def _get_google_scholar(**kwargs: Any) -> BaseTool:
+    return GoogleScholarQueryRun(api_wrapper=GoogleScholarAPIWrapper(**kwargs))
+
+
 def _get_google_serper_results_json(**kwargs: Any) -> BaseTool:
     return GoogleSerperResults(api_wrapper=GoogleSerperAPIWrapper(**kwargs))
 
@@ -314,6 +328,14 @@ def _get_eleven_labs_text2speech(**kwargs: Any) -> BaseTool:
     return ElevenLabsText2SpeechTool(**kwargs)
 
 
+def _get_memorize(llm: BaseLanguageModel, **kwargs: Any) -> BaseTool:
+    return Memorize(llm=llm)
+
+
+def _get_google_cloud_texttospeech(**kwargs: Any) -> BaseTool:
+    return GoogleCloudTextToSpeechTool(**kwargs)
+
+
 _EXTRA_LLM_TOOLS: Dict[
     str,
     Tuple[Callable[[Arg(BaseLanguageModel, "llm"), KwArg(Any)], BaseTool], List[str]],
@@ -321,6 +343,7 @@ _EXTRA_LLM_TOOLS: Dict[
     "news-api": (_get_news_api, ["news_api_key"]),
     "tmdb-api": (_get_tmdb_api, ["tmdb_bearer_token"]),
     "podcast-api": (_get_podcast_api, ["listen_api_key"]),
+    "memorize": (_get_memorize, []),
 }
 _EXTRA_OPTIONAL_TOOLS: Dict[str, Tuple[Callable[[KwArg(Any)], BaseTool], List[str]]] = {
     "wolfram-alpha": (_get_wolfram_alpha, ["wolfram_alpha_appid"]),
@@ -337,6 +360,10 @@ _EXTRA_OPTIONAL_TOOLS: Dict[str, Tuple[Callable[[KwArg(Any)], BaseTool], List[st
     "metaphor-search": (_get_metaphor_search, ["metaphor_api_key"]),
     "ddg-search": (_get_ddg_search, []),
     "google-serper": (_get_google_serper, ["serper_api_key", "aiosession"]),
+    "google-scholar": (
+        _get_google_scholar,
+        ["top_k_results", "hl", "lr", "serp_api_key"],
+    ),
     "google-serper-results-json": (
         _get_google_serper_results_json,
         ["serper_api_key", "aiosession"],
@@ -374,6 +401,7 @@ _EXTRA_OPTIONAL_TOOLS: Dict[str, Tuple[Callable[[KwArg(Any)], BaseTool], List[st
         ["api_login", "api_password", "aiosession"],
     ),
     "eleven_labs_text2speech": (_get_eleven_labs_text2speech, ["eleven_api_key"]),
+    "google_cloud_texttospeech": (_get_google_cloud_texttospeech, []),
 }
 
 
